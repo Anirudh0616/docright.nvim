@@ -11,6 +11,7 @@ local last = {
 
 local active_request = 0
 local installed_mappings = {}
+local mapping_augroup = vim.api.nvim_create_augroup("DocRightMappings", { clear = true })
 
 local function clear_installed_mappings()
   for _, mapping in ipairs(installed_mappings) do
@@ -24,6 +25,23 @@ local function set_mapping(mode, lhs, rhs, opts)
   table.insert(installed_mappings, { mode = mode, lhs = lhs })
 end
 
+local function install_mappings(merged)
+  clear_installed_mappings()
+
+  set_mapping("n", merged.mappings.document, M.document_cursor, {
+    desc = "DocRight document cursor context",
+    silent = true,
+  })
+  set_mapping("v", merged.mappings.document, M.document_selection, {
+    desc = "DocRight document selection",
+    silent = true,
+  })
+  set_mapping("n", merged.mappings.ask, M.ask_followup, {
+    desc = "DocRight ask follow-up",
+    silent = true,
+  })
+end
+
 local function provider()
   local opts = config.get()
   if opts.provider == "ollama" then
@@ -32,7 +50,7 @@ local function provider()
   error("Unsupported DocRight provider: " .. tostring(opts.provider))
 end
 
-local function programming_only_instruction()
+local function default_system_prompt()
   return table.concat({
     "You are DocRight, a Neovim documentation assistant.",
     "Only answer questions about programming languages, source code, APIs, libraries, frameworks, developer tooling, compilers, runtimes, and software engineering concepts.",
@@ -43,9 +61,18 @@ local function programming_only_instruction()
   }, "\n")
 end
 
+local function system_prompt()
+  local opts = config.get()
+  if type(opts.system_prompt) == "string" and opts.system_prompt:match("%S") then
+    return opts.system_prompt
+  end
+
+  return default_system_prompt()
+end
+
 local function documentation_prompt(code_context, opts)
   return table.concat({
-    programming_only_instruction(),
+    system_prompt(),
     "",
     "Write at most " .. tostring(opts.max_response_lines) .. " short lines.",
     "Prefer bullets shaped like `name`: what it does.",
@@ -60,7 +87,7 @@ end
 
 local function expansion_prompt(topic, opts)
   return table.concat({
-    programming_only_instruction(),
+    system_prompt(),
     "",
     "The user selected one part of a previous programming explanation and wants more detail.",
     "Explain only this selected item, using the original code context as background.",
@@ -82,7 +109,7 @@ end
 
 local function followup_prompt(question)
   return table.concat({
-    programming_only_instruction(),
+    system_prompt(),
     "",
     "Previous programming context:",
     "```",
@@ -97,6 +124,67 @@ local function followup_prompt(question)
     "",
     "Answer briefly unless more detail is necessary.",
   }, "\n")
+end
+
+local function max_display_width(lines)
+  local width = 0
+  for _, line in ipairs(lines) do
+    width = math.max(width, vim.fn.strdisplaywidth(line))
+  end
+  return width
+end
+
+local function open_debug_buffer(title, text)
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.bo[buf].bufhidden = "wipe"
+  vim.bo[buf].filetype = "markdown"
+
+  local lines = vim.split(text or "", "\n", { plain = true })
+  local content = { "# " .. title, "" }
+  vim.list_extend(content, lines)
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, content)
+  vim.bo[buf].modifiable = false
+
+  local width = math.min(math.max(max_display_width(vim.list_extend({ title }, lines)) + 6, 60), math.max(vim.o.columns - 4, 40))
+  local height = math.min(math.max(#lines + 2, 8), math.max(vim.o.lines - 4, 8))
+
+  vim.api.nvim_open_win(buf, true, {
+    relative = "editor",
+    width = width,
+    height = height,
+    row = math.floor((vim.o.lines - height) / 2),
+    col = math.floor((vim.o.columns - width) / 2),
+    border = config.get().window.border,
+    style = "minimal",
+    title = " DocRight Debug ",
+    title_pos = "center",
+  })
+
+  vim.keymap.set("n", "q", function()
+    local win = vim.api.nvim_get_current_win()
+    if vim.api.nvim_win_is_valid(win) then
+      vim.api.nvim_win_close(win, true)
+    end
+  end, { buffer = buf, silent = true })
+end
+
+local function config_debug_text()
+  local opts = config.get()
+  local lines = {
+    "Config:",
+    vim.inspect({
+      provider = opts.provider,
+      model = opts.model,
+      system_prompt = opts.system_prompt,
+      max_context_lines = opts.max_context_lines,
+      max_response_lines = opts.max_response_lines,
+    }),
+    "",
+    "Resolved system prompt:",
+    system_prompt(),
+    "",
+  }
+  return table.concat(lines, "\n")
 end
 
 local function ask_model(title, prompt, on_answer, show_actions)
@@ -207,9 +295,19 @@ function M.ask_followup()
   end)
 end
 
+function M.debug_prompt()
+  local opts = config.get()
+  local current = context.cursor_context(opts.max_context_lines)
+  local prompt = documentation_prompt(current, opts)
+  open_debug_buffer("DocRight Prompt Debug", prompt)
+end
+
+function M.debug_config()
+  open_debug_buffer("DocRight Config Debug", config_debug_text())
+end
+
 function M.setup(opts)
   local merged = config.setup(opts)
-  clear_installed_mappings()
 
   vim.api.nvim_create_user_command("DocRight", function()
     M.document_cursor()
@@ -219,18 +317,26 @@ function M.setup(opts)
     M.ask_followup()
   end, { desc = "Ask a follow-up about the last DocRight documentation", force = true })
 
-  set_mapping("n", merged.mappings.document, M.document_cursor, {
-    desc = "DocRight document cursor context",
-    silent = true,
-  })
-  set_mapping("v", merged.mappings.document, M.document_selection, {
-    desc = "DocRight document selection",
-    silent = true,
-  })
-  set_mapping("n", merged.mappings.ask, M.ask_followup, {
-    desc = "DocRight ask follow-up",
-    silent = true,
-  })
+  vim.api.nvim_create_user_command("DocRightDebug", function()
+    M.debug_prompt()
+  end, { desc = "Show the assembled DocRight prompt", force = true })
+
+  vim.api.nvim_create_user_command("DocRightConfigDebug", function()
+    M.debug_config()
+  end, { desc = "Show DocRight configuration values", force = true })
+
+  vim.api.nvim_clear_autocmds({ group = mapping_augroup })
+  if vim.v.vim_did_enter == 1 then
+    install_mappings(merged)
+  else
+    vim.api.nvim_create_autocmd("VimEnter", {
+      group = mapping_augroup,
+      once = true,
+      callback = function()
+        install_mappings(merged)
+      end,
+    })
+  end
 end
 
 return M

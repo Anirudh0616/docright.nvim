@@ -4,4 +4,8 @@ end
 
 vim.g.loaded_docright = 1
 
-require("docright").setup(vim.g.docright_opts)
+local config = require("docright.config")
+
+if not config.is_initialized() then
+  require("docright").setup(vim.g.docright_opts)
+end

@@ -26,6 +26,13 @@ COMMANDS                                                     *docright-commands*
 :DocRightAsk
   Ask a follow-up question about the last DocRight response.
 
+:DocRightDebug
+  Show the assembled prompt that DocRight will send for the current cursor
+  context.
+
+:DocRightConfigDebug
+  Show the merged DocRight config and the resolved system prompt.
+
 ==============================================================================
 MAPPINGS                                                     *docright-mappings*
 
@@ -37,6 +44,12 @@ Defaults:
 
 Inside a DocRight response window, <leader>ad expands the current response line
 or selected response text with more detail and a small title.
+
+==============================================================================
+DEBUG                                                           *docright-debug*
+
+:DocRightDebug opens a scratch buffer containing the assembled prompt for the
+current cursor context, including the resolved `system_prompt`.
 
 ==============================================================================
 CONFIGURATION                                                   *docright-setup*
@@ -52,11 +65,17 @@ plugin. Call setup() only when overriding defaults:
   }
 <
 
+If you call setup() yourself, it wins over the auto-loaded defaults.
+
 >
 require("docright").setup({
   provider = "ollama",
   model = "qwen2.5-coder:7b",
   endpoint = "http://127.0.0.1:11434/api/generate",
+  system_prompt = [[
+You are DocRight, a concise programming documentation assistant.
+Only answer questions about code and software engineering.
+]],
   temperature = 0.2,
   num_predict = 180,
   keep_alive = "10m",
@@ -81,5 +100,7 @@ GUARDRAIL                                                   *docright-guardrail*
 DocRight prompts the local model to answer only about programming languages,
 source code, APIs, libraries, frameworks, developer tooling, compilers,
 runtimes, and software engineering concepts.
+
+Set `system_prompt` in your config to replace the built-in system prompt.
 
 vim:tw=78:ts=8:ft=help:norl:

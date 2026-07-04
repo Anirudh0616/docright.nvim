@@ -29,13 +29,19 @@ vim.pack.add({
   },
 })
 
--- Optional: call setup only when overriding defaults.
 require("docright").setup({
   provider = "ollama",
   model = "qwen2.5-coder:7b", -- or the model name that you are using
   endpoint = "http://127.0.0.1:11434/api/generate",
+  system_prompt = [[
+You are DocRight, a concise programming documentation assistant.
+Only answer questions about code and software engineering.
+]],
 })
 ```
+
+If you prefer auto-loading through `plugin/docright.lua`, set `vim.g.docright_opts`
+before the plugin is sourced.
 
 
 ## Usage
@@ -48,6 +54,8 @@ Commands:
 
 - `:DocRight`
 - `:DocRightAsk`
+- `:DocRightDebug`
+- `:DocRightConfigDebug`
 
 By default, the result window opens on the right so you can still see the code you are asking about. It grows tall for larger answers and stays compact when the response is short.
 
@@ -66,6 +74,10 @@ require("docright").setup({
   keep_alive = "10m",
   max_context_lines = 50,
   max_response_lines = 8,
+  system_prompt = [[
+You are DocRight, a concise programming documentation assistant.
+Only answer questions about code and software engineering.
+]],
   window = {
     width = 64,
     height = 0.97,

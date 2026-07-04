@@ -9,6 +9,7 @@ M.defaults = {
   keep_alive = "10m",
   max_context_lines = 50,
   max_response_lines = 8,
+  system_prompt = nil,
   window = {
     width = 64,
     height = 0.97,
@@ -22,14 +23,20 @@ M.defaults = {
 }
 
 M.options = vim.deepcopy(M.defaults)
+M.initialized = false
 
 function M.setup(opts)
   M.options = vim.tbl_deep_extend("force", vim.deepcopy(M.defaults), opts or {})
+  M.initialized = true
   return M.options
 end
 
 function M.get()
   return M.options
+end
+
+function M.is_initialized()
+  return M.initialized
 end
 
 return M
