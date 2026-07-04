@@ -41,6 +41,17 @@ or selected response text with more detail and a small title.
 ==============================================================================
 CONFIGURATION                                                   *docright-setup*
 
+DocRight registers its default commands and mappings when Neovim loads the
+plugin. Call setup() only when overriding defaults:
+>
+  vim.g.docright_opts = {
+    mappings = {
+      document = "<leader>ad",
+      ask = "<leader>aa",
+    },
+  }
+<
+
 >
 require("docright").setup({
   provider = "ollama",

@@ -10,6 +10,19 @@ local last = {
 }
 
 local active_request = 0
+local installed_mappings = {}
+
+local function clear_installed_mappings()
+  for _, mapping in ipairs(installed_mappings) do
+    pcall(vim.keymap.del, mapping.mode, mapping.lhs)
+  end
+  installed_mappings = {}
+end
+
+local function set_mapping(mode, lhs, rhs, opts)
+  vim.keymap.set(mode, lhs, rhs, opts)
+  table.insert(installed_mappings, { mode = mode, lhs = lhs })
+end
 
 local function provider()
   local opts = config.get()
@@ -196,6 +209,7 @@ end
 
 function M.setup(opts)
   local merged = config.setup(opts)
+  clear_installed_mappings()
 
   vim.api.nvim_create_user_command("DocRight", function()
     M.document_cursor()
@@ -205,15 +219,15 @@ function M.setup(opts)
     M.ask_followup()
   end, { desc = "Ask a follow-up about the last DocRight documentation", force = true })
 
-  vim.keymap.set("n", merged.mappings.document, M.document_cursor, {
+  set_mapping("n", merged.mappings.document, M.document_cursor, {
     desc = "DocRight document cursor context",
     silent = true,
   })
-  vim.keymap.set("v", merged.mappings.document, M.document_selection, {
+  set_mapping("v", merged.mappings.document, M.document_selection, {
     desc = "DocRight document selection",
     silent = true,
   })
-  vim.keymap.set("n", merged.mappings.ask, M.ask_followup, {
+  set_mapping("n", merged.mappings.ask, M.ask_followup, {
     desc = "DocRight ask follow-up",
     silent = true,
   })

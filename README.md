@@ -29,6 +29,7 @@ vim.pack.add({
   },
 })
 
+-- Optional: call setup only when overriding defaults.
 require("docright").setup({
   provider = "ollama",
   model = "qwen2.5-coder:7b", -- or the model name that you are using
@@ -51,6 +52,9 @@ Commands:
 By default, the result window opens on the right so you can still see the code you are asking about. It grows tall for larger answers and stays compact when the response is short.
 
 ## Configuration
+
+DocRight registers its default commands and mappings when Neovim loads the
+plugin. Call `setup()` only when you want to override defaults:
 
 ```lua
 require("docright").setup({
