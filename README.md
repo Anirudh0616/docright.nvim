@@ -1,10 +1,15 @@
 # DocRight.nvim
 
-DocRight.nvim is a Neovim plugin that asks a local model for short programming documentation about the code you select (with v). It is currently in beta: useful, working, and still missing a lot of lofty features. Basically a better Shift+K.
+DocRight.nvim is a Neovim plugin that asks a local model for short programming documentation about code under the cursor or in a visual selection. It is built for quick lookups inside Neovim, not broad conversation.
 
 ![Demo GIF](preview.gif)
 
-It is built for quick lookups inside Neovim and not broad conversation, although there is a rabbit hole feature. The plugin keeps answers focused on programming topics only.
+## What Changed
+
+- `system_prompt` support for custom style instructions
+- `:DocRightDebug` to inspect the assembled prompt
+- `:DocRightConfigDebug` to inspect merged config and resolved prompt
+- auto-load support through `plugin/docright.lua`
 
 ## Requirements
 
@@ -31,7 +36,7 @@ vim.pack.add({
 
 require("docright").setup({
   provider = "ollama",
-  model = "qwen2.5-coder:7b", -- or the model name that you are using
+  model = "qwen2.5-coder:7b",
   endpoint = "http://127.0.0.1:11434/api/generate",
   system_prompt = [[
 You are DocRight, a concise programming documentation assistant.
@@ -40,15 +45,13 @@ Only answer questions about code and software engineering.
 })
 ```
 
-If you prefer auto-loading through `plugin/docright.lua`, set `vim.g.docright_opts`
-before the plugin is sourced.
-
+If you prefer auto-loading, set `vim.g.docright_opts` before `plugin/docright.lua` runs.
 
 ## Usage
 
 - Select code in visual mode and press `<leader>ad`.
 - Press `<leader>aa` for a follow-up about the last result.
-- Inside a DocRight response window, press `<leader>ad` on a line or selection to go down a rabbit hole.
+- Inside a DocRight response window, press `<leader>ad` on a line or selection to go deeper.
 
 Commands:
 
@@ -57,17 +60,12 @@ Commands:
 - `:DocRightDebug`
 - `:DocRightConfigDebug`
 
-By default, the result window opens on the right so you can still see the code you are asking about. It grows tall for larger answers and stays compact when the response is short.
-
 ## Configuration
-
-DocRight registers its default commands and mappings when Neovim loads the
-plugin. Call `setup()` only when you want to override defaults:
 
 ```lua
 require("docright").setup({
-  provider = "ollama", -- or provider of your choice
-  model = "qwen2.5-coder:7b", -- or model of your choice
+  provider = "ollama",
+  model = "qwen2.5-coder:7b",
   endpoint = "http://127.0.0.1:11434/api/generate",
   temperature = 0.2,
   num_predict = 180,
@@ -91,21 +89,20 @@ Only answer questions about code and software engineering.
 })
 ```
 
-## Notes
+Notes:
 
-- DocRight only answers programming-related questions.
-- The current release is beta, so the surface is intentionally small and still evolving.
-- The response window is tuned for fast reading rather than long-form explanation.
+- `system_prompt` adds custom style instructions. DocRight still keeps its core code-documentation guidance.
+- `max_context_lines` limits how much code near the cursor is sent.
+- `max_response_lines` and `num_predict` help keep replies short.
+- The response window opens on the right by default so you can keep the source visible.
 
+## Why It Exists
 
-## Want to implement 
-
-- Complete Codebase Context 
-- Larger Models through API integration
-- Run faster 
-
+- Fast docs for code under cursor
+- Short follow-ups without leaving Neovim
+- Local model only, no remote API needed
 
 ---
-Feel free to contribute
+## Feel Free to Contribute
 
 Anirudh

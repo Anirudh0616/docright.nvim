@@ -58,6 +58,8 @@ local function default_system_prompt()
     "Base your answer on the provided code or symbol when possible.",
     "Use a compact documentation-reference style.",
     "No intro, no outro, no broad tutorial.",
+    "Prefer bullets shaped like `name`: what it does.",
+    "Mention only the important components, parameters, return values, side effects, or gotchas visible in the code.",
   }, "\n")
 end
 
@@ -75,8 +77,6 @@ local function documentation_prompt(code_context, opts)
     system_prompt(),
     "",
     "Write at most " .. tostring(opts.max_response_lines) .. " short lines.",
-    "Prefer bullets shaped like `name`: what it does.",
-    "Mention only the important components, parameters, return values, side effects, or gotchas visible in the code.",
     "",
     "Programming context:",
     "```",
