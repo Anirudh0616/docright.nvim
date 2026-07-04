@@ -24,7 +24,7 @@ end
 
 local function centered_dimensions(opts, content)
   local max_width = math.min(resolve_size(opts.window.width, vim.o.columns), vim.o.columns - 4)
-  local max_height = math.min(resolve_size(opts.window.height, vim.o.lines), vim.o.lines - 4)
+  local max_height = math.max(resolve_size(opts.window.height, vim.o.lines), vim.o.lines - 4)
   local width = math.min(math.max(display_width(content) + 4, 30), max_width)
   local height = math.min(math.max(#content, 4), max_height)
 
