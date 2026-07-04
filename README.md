@@ -2,6 +2,8 @@
 
 DocRight.nvim is a Neovim plugin that asks a local model for short programming documentation about the code you select (with v). It is currently in beta: useful, working, and still missing a lot of lofty features. Basically a better Shift+K.
 
+![Demo GIF](preview.gif)
+
 It is built for quick lookups inside Neovim and not broad conversation, although there is a rabbit hole feature. The plugin keeps answers focused on programming topics only.
 
 ## Requirements
