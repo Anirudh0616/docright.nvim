@@ -1,8 +1,8 @@
 # DocRight.nvim
 
-DocRight is a small Neovim plugin that asks a local model for concise programming documentation about the code you select or the symbol near your cursor. It keeps the current documented context only so you can ask follow-up questions.
+DocRight.nvim is a Neovim plugin that asks a local model for short programming documentation about the code you select (with v). It is currently in beta: useful, working, and still missing a lot of lofty features. Basically a better Shift+K.
 
-The default provider is [Ollama](https://ollama.com/) on `http://127.0.0.1:11434` with the `qwen2.5-coder:7b` model.
+It is built for quick lookups inside Neovim and not broad conversation, although there is a rabbit hole feature. The plugin keeps answers focused on programming topics only.
 
 ## Requirements
 
@@ -17,24 +17,7 @@ ollama pull qwen2.5-coder:7b
 
 ## Installation
 
-With lazy.nvim:
-
-```lua
-{
-  "Anirudh0616/docright.nvim",
-  config = function()
-    require("docright").setup({
-      model = "qwen2.5-coder:7b",
-      mappings = {
-        document = "<leader>ad",
-        ask = "<leader>aa",
-      },
-    })
-  end,
-}
-```
-
-With Neovim's built-in `vim.pack`:
+With `vim.pack`:
 
 ```lua
 vim.pack.add({
@@ -46,78 +29,41 @@ vim.pack.add({
 
 require("docright").setup({
   provider = "ollama",
-  model = "qwen2.5-coder:7b",
+  model = "qwen2.5-coder:7b", -- or the model name that you are using
   endpoint = "http://127.0.0.1:11434/api/generate",
-  mappings = {
-    document = "<leader>ad",
-    ask = "<leader>aa",
-  },
-})
-```
-
-`vim.pack` expects plugins to come from Git repositories. For local development
-before you publish the plugin, use the runtime path directly:
-
-```lua
-vim.opt.rtp:prepend("/Users/newton/dev/projects/docright")
-
-require("docright").setup({
-  provider = "ollama",
-  model = "qwen2.5-coder:7b",
-})
-```
-
-If you turn this directory into a local Git repository, you can also install it
-through `vim.pack` with a `file://` source:
-
-```lua
-vim.pack.add({
-  {
-    src = "file:///Users/newton/dev/projects/docright",
-    name = "docright.nvim",
-  },
-})
-
-require("docright").setup({
-  model = "qwen2.5-coder:7b",
 })
 ```
 
 For local development:
 
 ```lua
-{
-  dir = "/Users/newton/dev/projects/docright",
-  config = function()
-    require("docright").setup()
-  end,
-}
+vim.opt.rtp:prepend("/Users/newton/dev/projects/docright")
+
+require("docright").setup({
+  provider = "ollama",
+  model = "qwen2.5-coder:7b", -- or the model name that you are using
+})
 ```
 
 ## Usage
 
-- Place the cursor on code and press `<leader>ad`.
 - Select code in visual mode and press `<leader>ad`.
-- Press `<leader>aa` to ask a follow-up about the last generated documentation.
-- Inside a DocRight response window, press `<leader>ad` on a line, or select text and press `<leader>ad`, to expand that specific item with a small title.
+- Press `<leader>aa` for a follow-up about the last result.
+- Inside a DocRight response window, press `<leader>ad` on a line or selection to go down a rabbit hole.
 
 Commands:
 
 - `:DocRight`
 - `:DocRightAsk`
 
-DocRight instructs the local model to answer only programming-related questions and to refuse unrelated topics.
-
-Documentation responses are intentionally short by default. The plugin sends the selected code, or about 50 nearby lines around the cursor, rather than the whole file. This keeps responses faster and more relevant for quick lookup.
-
-The floating window opens on the right side by default so you can still see the selected code. It grows tall for long answers, up to nearly the full editor height, and shrinks to fit short responses. Set `window.position = "cursor"` if you prefer a diagnostic-style popup above or below the current line.
+By default, the result window opens on the right so you can still see the code you are asking about. It grows tall for larger answers and stays compact when the response is short.
 
 ## Configuration
 
 ```lua
 require("docright").setup({
-  provider = "ollama",
-  model = "qwen2.5-coder:7b",
+  provider = "ollama", -- or provider of your choice
+  model = "qwen2.5-coder:7b", -- or model of your choice
   endpoint = "http://127.0.0.1:11434/api/generate",
   temperature = 0.2,
   num_predict = 180,
@@ -136,3 +82,22 @@ require("docright").setup({
   },
 })
 ```
+
+## Notes
+
+- DocRight only answers programming-related questions.
+- The current release is beta, so the surface is intentionally small and still evolving.
+- The response window is tuned for fast reading rather than long-form explanation.
+
+
+## Want to implement 
+
+- Complete Codebase Context 
+- Larger Models through API integration
+- Run faster 
+
+
+---
+Feel free to contribute
+
+Anirudh
