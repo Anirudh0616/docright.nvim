@@ -49,6 +49,33 @@ function M.selection()
   return text
 end
 
+function M.selection_details()
+  local start_line, start_col, end_line, end_col, mode = visual_range()
+  local text = M.selection()
+  if not text then
+    return nil
+  end
+
+  return {
+    text = text,
+    start_line = start_line,
+    start_col = start_col,
+    end_line = end_line,
+    end_col = end_col,
+    mode = mode,
+  }
+end
+
+function M.screen_row_for_line(line)
+  local top_line = vim.fn.line("w0")
+  local bottom_line = vim.fn.line("w$")
+  if line < top_line or line > bottom_line then
+    return math.max(vim.fn.winline() - 1, 0)
+  end
+
+  return math.max(line - top_line, 0)
+end
+
 function M.cursor_context(max_lines)
   local bufnr = 0
   local row = vim.api.nvim_win_get_cursor(0)[1]

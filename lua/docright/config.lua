@@ -11,7 +11,7 @@ M.defaults = {
   max_response_lines = 8,
   window = {
     width = 64,
-    height = 14,
+    height = 0.97,
     border = "rounded",
     position = "right",
   },

@@ -91,7 +91,7 @@ local function ask_model(title, prompt, on_answer, show_actions)
   active_request = active_request + 1
   local request_id = active_request
 
-  ui.loading("Asking " .. opts.model .. "...", opts)
+  ui.loading("Asking " .. opts.model .. "...", opts, show_actions)
 
   provider().generate(opts, prompt, function(answer, err)
     vim.schedule(function()
@@ -113,11 +113,11 @@ local function ask_model(title, prompt, on_answer, show_actions)
   end)
 end
 
-local function document_context(code_context)
+local function document_context(code_context, show_actions)
   last.context = code_context
   ask_model("Documentation", documentation_prompt(code_context, config.get()), function(answer)
     last.answer = answer
-  end)
+  end, show_actions)
 end
 
 local function current_response_topic()
@@ -158,19 +158,23 @@ function M.expand_response()
 end
 
 function M.document_selection()
-  local selected = context.selection()
+  local selected = context.selection_details()
   if not selected then
     vim.notify("DocRight: no visual selection found", vim.log.levels.WARN)
     return
   end
 
-  document_context(selected)
+  document_context(selected.text, {
+    anchor_row = context.screen_row_for_line(selected.start_line),
+  })
 end
 
 function M.document_cursor()
   local opts = config.get()
   local current = context.cursor_context(opts.max_context_lines)
-  document_context(current)
+  document_context(current, {
+    anchor_row = math.max(vim.fn.winline() - 1, 0),
+  })
 end
 
 function M.ask_followup()

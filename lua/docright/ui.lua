@@ -36,13 +36,13 @@ local function centered_dimensions(opts, content)
   }
 end
 
-local function right_dimensions(opts, content)
+local function right_dimensions(opts, content, actions)
   local max_width = math.min(resolve_size(opts.window.width, vim.o.columns), vim.o.columns - 4)
-  local max_height = math.min(resolve_size(opts.window.height, vim.o.lines), vim.o.lines - 4)
+  local max_height = math.min(resolve_size(opts.window.height, vim.o.lines), vim.o.lines - 1)
   local width = math.min(math.max(display_width(content) + 4, 34), max_width)
-  local height = math.min(math.max(#content, 4), max_height)
-  local cursor_row = math.max(vim.fn.winline() - 1, 0)
-  local row = math.min(cursor_row, math.max(vim.o.lines - height - 3, 0))
+  local height = math.min(math.max(#content + 2, 6), max_height)
+  local cursor_row = actions.anchor_row or math.max(vim.fn.winline() - 1, 0)
+  local row = math.min(cursor_row, math.max(vim.o.lines - height - 2, 0))
 
   return {
     width = width,
@@ -75,10 +75,10 @@ local function cursor_dimensions(opts, content)
   }
 end
 
-local function window_options(opts, content)
+local function window_options(opts, content, actions)
   local size
   if opts.window.position == "right" then
-    size = right_dimensions(opts, content)
+    size = right_dimensions(opts, content, actions)
     return {
       relative = "editor",
       width = size.width,
@@ -136,7 +136,7 @@ function M.show(title, lines, opts, actions)
   vim.api.nvim_buf_set_lines(state.buf, 0, -1, false, content)
   vim.bo[state.buf].modifiable = false
 
-  local win_opts = vim.tbl_extend("force", window_options(opts, content), {
+  local win_opts = vim.tbl_extend("force", window_options(opts, content, actions), {
     border = opts.window.border,
     style = "minimal",
     title = " DocRight ",
@@ -145,6 +145,8 @@ function M.show(title, lines, opts, actions)
   state.win = vim.api.nvim_open_win(state.buf, focus, win_opts)
 
   vim.wo[state.win].wrap = true
+  vim.wo[state.win].scrolloff = 0
+  vim.wo[state.win].sidescrolloff = 0
   vim.keymap.set("n", "q", function()
     if state.win and vim.api.nvim_win_is_valid(state.win) then
       vim.api.nvim_win_close(state.win, true)
@@ -168,8 +170,9 @@ function M.show(title, lines, opts, actions)
   end
 end
 
-function M.loading(message, opts)
-  M.show("Working", message or "Asking the local model...", opts, { focus = false })
+function M.loading(message, opts, actions)
+  actions = vim.tbl_extend("force", actions or {}, { focus = false })
+  M.show("Working", message or "Asking the local model...", opts, actions)
 end
 
 return M

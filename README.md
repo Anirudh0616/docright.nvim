@@ -110,7 +110,7 @@ DocRight instructs the local model to answer only programming-related questions 
 
 Documentation responses are intentionally short by default. The plugin sends the selected code, or about 50 nearby lines around the cursor, rather than the whole file. This keeps responses faster and more relevant for quick lookup.
 
-The floating window opens on the right side by default so you can still see the selected code. It shrinks to fit short responses, up to the configured maximum size. Set `window.position = "cursor"` if you prefer a diagnostic-style popup above or below the current line.
+The floating window opens on the right side by default so you can still see the selected code. It grows tall for long answers, up to nearly the full editor height, and shrinks to fit short responses. Set `window.position = "cursor"` if you prefer a diagnostic-style popup above or below the current line.
 
 ## Configuration
 
@@ -126,7 +126,7 @@ require("docright").setup({
   max_response_lines = 8,
   window = {
     width = 64,
-    height = 14,
+    height = 0.97,
     border = "rounded",
     position = "right",
   },
