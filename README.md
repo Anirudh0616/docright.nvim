@@ -34,16 +34,6 @@ require("docright").setup({
 })
 ```
 
-For local development:
-
-```lua
-vim.opt.rtp:prepend("/Users/newton/dev/projects/docright")
-
-require("docright").setup({
-  provider = "ollama",
-  model = "qwen2.5-coder:7b", -- or the model name that you are using
-})
-```
 
 ## Usage
 
