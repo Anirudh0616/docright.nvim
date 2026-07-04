@@ -33,7 +33,12 @@ vim.pack.add({
     name = "docright.nvim",
   },
 })
+```
 
+
+Example Setup 
+
+```lua
 require("docright").setup({
   provider = "ollama",
   model = "qwen2.5-coder:7b",
