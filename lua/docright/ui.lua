@@ -36,6 +36,22 @@ local function centered_dimensions(opts, content)
   }
 end
 
+local function right_dimensions(opts, content)
+  local max_width = math.min(resolve_size(opts.window.width, vim.o.columns), vim.o.columns - 4)
+  local max_height = math.min(resolve_size(opts.window.height, vim.o.lines), vim.o.lines - 4)
+  local width = math.min(math.max(display_width(content) + 4, 34), max_width)
+  local height = math.min(math.max(#content, 4), max_height)
+  local cursor_row = math.max(vim.fn.winline() - 1, 0)
+  local row = math.min(cursor_row, math.max(vim.o.lines - height - 3, 0))
+
+  return {
+    width = width,
+    height = height,
+    row = row,
+    col = math.max(vim.o.columns - width - 2, 0),
+  }
+end
+
 local function cursor_dimensions(opts, content)
   local max_width = math.max(vim.api.nvim_win_get_width(0) - 4, 20)
   local max_height = math.max(vim.api.nvim_win_get_height(0) - 2, 4)
@@ -61,6 +77,17 @@ end
 
 local function window_options(opts, content)
   local size
+  if opts.window.position == "right" then
+    size = right_dimensions(opts, content)
+    return {
+      relative = "editor",
+      width = size.width,
+      height = size.height,
+      row = size.row,
+      col = size.col,
+    }
+  end
+
   if opts.window.position == "center" then
     size = centered_dimensions(opts, content)
     return {

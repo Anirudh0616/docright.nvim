@@ -13,7 +13,7 @@ M.defaults = {
     width = 64,
     height = 14,
     border = "rounded",
-    position = "cursor",
+    position = "right",
   },
   mappings = {
     document = "<leader>ad",
