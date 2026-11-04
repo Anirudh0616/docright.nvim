@@ -2,6 +2,9 @@ local test_files = {
   "test/config_test.lua",
   "test/initialize_test.lua",
   "test/mappings_test.lua",
+  "test/prompt_test.lua",
+  "test/provider_test.lua",
+  "test/switch_test.lua",
 }
 
 local root = vim.fn.getcwd()
@@ -13,11 +16,9 @@ package.path = table.concat({
 
 for _, file in ipairs(test_files) do
   package.loaded["test.helpers"] = nil
-  package.loaded["docright"] = nil
-  package.loaded["docright.config"] = nil
-  package.loaded["docright.context"] = nil
-  package.loaded["docright.ui"] = nil
-  package.loaded["docright.provider.ollama"] = nil
+
+  local helpers = require("test.helpers")
+  helpers.reset_modules()
 
   dofile(root .. "/" .. file)
 end

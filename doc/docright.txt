@@ -1,21 +1,64 @@
-*docright.txt* Local AI documentation for Neovim
+*docright.txt* Local and hosted AI documentation for Neovim
 
 ==============================================================================
 CONTENTS                                                        *docright*
 
-DocRight asks a local model for concise programming documentation about
-selected code or the code near the cursor. Follow-up questions reuse the last
-documented context.
+DocRight asks a model for concise programming documentation about selected code
+or the code near the cursor. Follow-up questions reuse the last documented
+context. It runs fully local with Ollama, or against a hosted API with your own
+key.
 
 ==============================================================================
 REQUIREMENTS                                             *docright-requirements*
 
-Neovim 0.9+, curl, and Ollama running locally.
+Neovim 0.9+ and curl, plus one of:
 
-The default model is qwen2.5-coder:7b:
+- Ollama running locally with a pulled model:
 >
   ollama pull qwen2.5-coder:7b
 <
+- an API key for OpenRouter, OpenAI, or Anthropic.
+
+==============================================================================
+PROVIDERS                                                 *docright-providers*
+
+Set `provider` to one of `ollama`, `openrouter`, `openai`, or `anthropic`. Each
+provider ships with a default endpoint, model, and key environment variable.
+
+  provider      key env var             default model ~
+  ollama        none                    qwen2.5-coder:7b
+  openrouter    OPENROUTER_API_KEY      anthropic/claude-3.5-sonnet
+  openai        OPENAI_API_KEY          gpt-4o-mini
+  anthropic     ANTHROPIC_API_KEY       claude-3-5-sonnet-latest
+
+Default models are a starting point only. Set `model` to any model the provider
+serves.
+
+The API key is resolved in this order:
+>
+  1. `api_key` in the setup table
+  2. the environment variable named by `api_key_env`
+  3. the provider's default environment variable
+<
+Keys are never printed by the debug commands.
+
+Local example:
+>
+  require("docright").setup({
+    provider = "ollama",
+    model = "qwen2.5-coder:7b",
+  })
+<
+Hosted example:
+>
+  -- export OPENROUTER_API_KEY=sk-or-...
+  require("docright").setup({
+    provider = "openrouter",
+    model = "anthropic/claude-3.5-sonnet",
+  })
+<
+Any OpenAI-compatible endpoint also works. Point `endpoint` at a chat completions
+URL and use `provider = "openai"` with your own `api_key_env`.
 
 ==============================================================================
 COMMANDS                                                     *docright-commands*
@@ -26,30 +69,46 @@ COMMANDS                                                     *docright-commands*
 :DocRightAsk
   Ask a follow-up question about the last DocRight response.
 
+:DocRightProvider [name]
+  Print the active provider and model, or switch to another provider. Switching
+  applies that provider's default endpoint, model, and key environment variable
+  and keeps everything else.
+
+:DocRightModel [name]
+  Print the active model, or set it. Use this after switching provider when you
+  want a model other than the preset default. Completion offers the models in
+  `model_suggestions`; substring matching, case-insensitive. Any other model
+  name can still be typed manually.
+
 :DocRightDebug
   Show the assembled prompt that DocRight will send for the current cursor
   context.
 
 :DocRightConfigDebug
-  Show the merged DocRight config and the resolved system prompt.
+  Show the merged DocRight config, the resolved system prompt, and whether an API
+  key was found.
 
 ==============================================================================
 MAPPINGS                                                     *docright-mappings*
 
 Defaults:
 >
-  <leader>ad    document selection or cursor context
-  <leader>aa    ask follow-up
+  <leader>ad   normal mode: document code near the cursor
+  <leader>ad   visual mode: document the selection
+  <leader>aa   ask a follow-up about the last answer
+  q            close a DocRight window
 <
-
-Inside a DocRight response window, <leader>ad expands the current response line
-or selected response text with more detail and a small title.
+Inside a response window, <leader>ad expands the line or selection under the
+cursor.
 
 ==============================================================================
 DEBUG                                                           *docright-debug*
 
-:DocRightDebug opens a scratch buffer containing the assembled prompt for the
-current cursor context, including the resolved `system_prompt`.
+:DocRightDebug opens a scratch buffer containing the provider, model, endpoint,
+and the assembled prompt for the current cursor context, including the resolved
+`system_prompt`.
+
+:DocRightConfigDebug opens the merged config with the API key redacted.
 
 ==============================================================================
 CONFIGURATION                                                   *docright-setup*
@@ -58,10 +117,8 @@ DocRight registers its default commands and mappings when Neovim loads the
 plugin. Call setup() only when overriding defaults:
 >
   vim.g.docright_opts = {
-    mappings = {
-      document = "<leader>ad",
-      ask = "<leader>aa",
-    },
+    provider = "openrouter",
+    model = "anthropic/claude-3.5-sonnet",
   }
 <
 
@@ -69,18 +126,23 @@ If you call setup() yourself, it wins over the auto-loaded defaults.
 
 >
 require("docright").setup({
-  provider = "ollama",
-  model = "qwen2.5-coder:7b",
-  endpoint = "http://127.0.0.1:11434/api/generate",
+  provider = "openrouter",
+  model = "anthropic/claude-3.5-sonnet",
+  endpoint = "https://openrouter.ai/api/v1/chat/completions",
+  api_key_env = "OPENROUTER_API_KEY",
+  api_key = nil,
+  extra_headers = {},
+  temperature = 0.2,
+  num_predict = 180,
+  max_tokens = nil,
+  timeout_ms = 60000,
+  keep_alive = "10m",
+  max_context_lines = 50,
+  max_response_lines = 8,
   system_prompt = [[
 You are DocRight, a concise programming documentation assistant.
 Only answer questions about code and software engineering.
 ]],
-  temperature = 0.2,
-  num_predict = 180,
-  keep_alive = "10m",
-  max_context_lines = 50,
-  max_response_lines = 8,
   window = {
     width = 64,
     height = 0.97,
@@ -91,15 +153,24 @@ Only answer questions about code and software engineering.
     document = "<leader>ad",
     ask = "<leader>aa",
   },
+  model_suggestions = {
+    "z-ai/glm-5.3-flash",
+    "deepseek/deepseek-v4.1-flash",
+    "google/gemini-2.5-flash",
+    "meta-llama/llama-3.3-70b-instruct",
+    "mistralai/mistral-small-2603",
+  },
 })
 <
+`keep_alive` and `num_predict` are Ollama options. Hosted providers use
+`max_tokens`, which falls back to `num_predict` when unset.
 
 ==============================================================================
 GUARDRAIL                                                   *docright-guardrail*
 
-DocRight prompts the local model to answer only about programming languages,
-source code, APIs, libraries, frameworks, developer tooling, compilers,
-runtimes, and software engineering concepts.
+DocRight prompts the model to answer only about programming languages, source
+code, APIs, libraries, frameworks, developer tooling, compilers, runtimes, and
+software engineering concepts.
 
 Set `system_prompt` in your config to replace the built-in system prompt.
 

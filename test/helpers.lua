@@ -1,11 +1,22 @@
 local M = {}
 
+local function reset_modules()
+  local names = {}
+  for name in pairs(package.loaded) do
+    if name == "docright" or name:match("^docright%.") then
+      table.insert(names, name)
+    end
+  end
+
+  for _, name in ipairs(names) do
+    package.loaded[name] = nil
+  end
+end
+
+M.reset_modules = reset_modules
+
 function M.bootstrap()
-  package.loaded["docright"] = nil
-  package.loaded["docright.config"] = nil
-  package.loaded["docright.context"] = nil
-  package.loaded["docright.ui"] = nil
-  package.loaded["docright.provider.ollama"] = nil
+  reset_modules()
 end
 
 function M.assert_contains(haystack, needle, message)
