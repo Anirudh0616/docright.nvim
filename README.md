@@ -50,6 +50,12 @@ vim.pack.add({
 
 Default models are only a starting point. Set `model` to anything the provider serves.
 
+On `openrouter`, DocRight sends `reasoning: { enabled = false }` with each request so
+thinking models (qwen3 and similar) spend the whole `max_tokens` budget on the answer
+instead of hidden reasoning traces. Models that require reasoning reject that field
+with HTTP 400; DocRight retries such requests once without it. OpenAI-compatible
+endpoints other than OpenRouter are not sent this field, since not all accept it.
+
 ### Ollama (local, default)
 
 ```lua

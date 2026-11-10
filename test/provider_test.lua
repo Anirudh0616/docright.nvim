@@ -49,6 +49,15 @@ helpers.assert_eq(openrouter_spec.url, "https://openrouter.ai/api/v1/chat/comple
 helpers.assert_eq(has_header(openrouter_spec.headers, "Authorization: Bearer sk-or-test"), true, "openrouter should send the env key")
 helpers.assert_eq(has_header(openrouter_spec.headers, "HTTP-Referer"), true, "openrouter should send attribution headers")
 helpers.assert_eq(openrouter_opts.api_key_env, "OPENROUTER_API_KEY", "openrouter should default to its env var")
+helpers.assert_eq(openrouter_spec.body.reasoning.enabled, false, "openrouter should disable reasoning for short answers")
+helpers.assert_eq(openai_spec.body.reasoning, nil, "openai should not send the reasoning field")
+
+-- reasoning_mandatory
+local openai_module = require("docright.provider.openai")
+local mandatory = "Reasoning is mandatory for this endpoint and cannot be disabled."
+helpers.assert_eq(openai_module.reasoning_mandatory(mandatory), true, "reasoning_mandatory should match the OpenRouter refusal")
+helpers.assert_eq(openai_module.reasoning_mandatory("Bad request"), false, "reasoning_mandatory should ignore unrelated errors")
+helpers.assert_eq(openai_module.reasoning_mandatory(nil), false, "reasoning_mandatory should tolerate nil messages")
 
 -- anthropic
 vim.env.ANTHROPIC_API_KEY = "sk-ant-test"

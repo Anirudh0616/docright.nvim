@@ -31,6 +31,11 @@ provider ships with a default endpoint, model, and key environment variable.
   openai        OPENAI_API_KEY          gpt-4o-mini
   anthropic     ANTHROPIC_API_KEY       claude-3-5-sonnet-latest
 
+OpenRouter requests include `reasoning: { enabled = false }` so thinking models
+(qwen3 and similar) spend the whole `max_tokens` budget on the answer instead of
+hidden reasoning traces. Models that require reasoning reject that field with HTTP
+400; DocRight retries such requests once without it.
+
 Default models are a starting point only. Set `model` to any model the provider
 serves.
 
