@@ -95,7 +95,7 @@ function M.generate(opts, prompt, callback)
     return
   end
 
-  http.post(spec, function(result, failure)
+  local function handle(result, failure)
     if failure then
       callback(nil, M.describe(opts, failure))
       return
@@ -103,7 +103,28 @@ function M.generate(opts, prompt, callback)
 
     local answer, err = module.parse(result.decoded)
     callback(answer, err)
-  end)
+  end
+
+  local function post(current)
+    http.post(current, function(result, failure)
+      local blocked = failure ~= nil
+        and current.body.reasoning ~= nil
+        and module.reasoning_mandatory ~= nil
+        and module.reasoning_mandatory(failure.message)
+
+      if blocked then
+        -- Reasoning-mandatory models reject `reasoning: { enabled = false }`.
+        -- Retry once without it instead of surfacing the HTTP error.
+        current.body.reasoning = nil
+        post(current)
+        return
+      end
+
+      handle(result, failure)
+    end)
+  end
+
+  post(spec)
 end
 
 return M

@@ -25,21 +25,42 @@ local function headers(opts)
 end
 
 function M.build(opts, prompt)
+  local body = {
+    model = opts.model,
+    stream = false,
+    temperature = opts.temperature,
+    max_tokens = opts.max_tokens or opts.num_predict,
+    messages = {
+      { role = "system", content = prompt.system },
+      { role = "user", content = prompt.user },
+    },
+  }
+
+  -- Reasoning models (qwen3, etc.) can spend the whole token budget on
+  -- hidden reasoning and return nil content. DocRight wants short answers.
+  if opts.provider == "openrouter" then
+    body.reasoning = { enabled = false }
+  end
+
   return {
     url = opts.endpoint,
     timeout_ms = opts.timeout_ms,
     headers = headers(opts),
-    body = {
-      model = opts.model,
-      stream = false,
-      temperature = opts.temperature,
-      max_tokens = opts.max_tokens or opts.num_predict,
-      messages = {
-        { role = "system", content = prompt.system },
-        { role = "user", content = prompt.user },
-      },
-    },
+    body = body,
   }
+end
+
+function M.reasoning_mandatory(message)
+  if type(message) ~= "string" then
+    return false
+  end
+
+  local lowered = message:lower()
+  local mentions_reasoning = lowered:find("reasoning", 1, true) ~= nil
+  local refuses_disable = lowered:find("mandatory", 1, true) ~= nil
+    or lowered:find("cannot be disabled", 1, true) ~= nil
+
+  return mentions_reasoning and refuses_disable
 end
 
 function M.parse(decoded)
